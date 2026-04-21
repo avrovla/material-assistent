@@ -1,9 +1,26 @@
 # src/material_assistent/main_streaming.py - потоковая версия
 import sys
+import requests
 from .agent import MaterialAgent
 
+def check_mcp_server():
+    """Проверяет доступность MCP сервера"""
+    try:
+        # Проверяем, запущен ли API сервер на порту 8000
+        response = requests.get("http://localhost:8000/openapi.json", timeout=2)
+        if response.status_code == 200:
+            print("✅ MCP сервер материаловедения доступен")
+            return True
+    except:
+        print("⚠️  MCP сервер не обнаружен на http://localhost:8000")
+        print("   Агент будет работать без дополнительных инструментов")
+        return False
+    
+
 def main():
-    agent = MaterialAgent()
+    mcp_available = check_mcp_server()
+
+    agent = MaterialAgent(use_mcp=mcp_available)
     
     print("=" * 60)
     print("🤖 Материаловедческий ассистент (с потоковым выводом)")

@@ -2,7 +2,7 @@ import os
 from qwen_agent.agents import Assistant
 
 class MaterialAgent:
-    def __init__(self):
+    def __init__(self, use_mcp: bool = True):
         # Конфигурация для Ollama
         self.llm_cfg = {
             'model': 'qwen3:4b',  # или другая ваша модель
@@ -14,6 +14,25 @@ class MaterialAgent:
                 'max_tokens': 2000
             }
         }
+
+        self.tools = []
+
+        if use_mcp:
+            self.tools.append({
+                'mcpServers': {
+                    'matgl-mcp': {
+                        'command': 'npx',
+                        'args': [
+                            '-y',
+                            '@ivotoby/openapi-mcp-server'
+                        ],
+                        'env': {
+                            'API_BASE_URL': 'http://localhost:8000',
+                            'OPENAPI_SPEC_PATH': 'http://localhost:8000/openapi.json'
+                        }
+                    }
+                }
+            })
         
         self.bot = Assistant(
             llm=self.llm_cfg,

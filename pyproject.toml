@@ -19,8 +19,12 @@ classifiers = [
 ]
 
 dependencies = [
-    "qwen-agent",
-    "soundfile"
+    "qwen-agent[gui,rag,code_interpreter,mcp]",
+    "soundfile",
+    "requests",
+    "httpx",
+    "fastmcp",
+    "pydantic"
 ]
 
 [project.optional-dependencies]
