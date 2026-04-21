@@ -1,0 +1,1 @@
+npx @modelcontextprotocol/inspector -e API_BASE_URL=http://localhost:8000 -e OPENAPI_SPEC_PATH=http://localhost:8000/openapi.json npx -y @ivotoby/openapi-mcp-server

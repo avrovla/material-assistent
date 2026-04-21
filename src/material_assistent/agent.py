@@ -36,6 +36,7 @@ class MaterialAgent:
         
         self.bot = Assistant(
             llm=self.llm_cfg,
+            function_list=self.tools if self.tools else None,
             system_message="""Ты полезный ассистент-эксперт в области материаловедения.
 Ты отлично разбираешься в металлах, полимерах, композитах, керамике и других материалах.
 Отвечай подробно, но по существу. Если не знаешь ответа, честно скажи об этом.
@@ -87,3 +88,39 @@ class MaterialAgent:
                     yield last_message.get('content', '')
                 else:
                     yield str(last_message)
+    
+    def get_mcp_tools_list(self):
+        """Получает список инструментов из подключенного MCP сервера"""
+
+        if not self.tools:
+            print("Нет подключенных MCP серверов")
+            return []
+
+        tools_info = []
+
+        # Qwen-Agent внутренне создает MCP клиент
+        # Мы можем получить инструменты из его конфигурации
+        for tool_config in self.tools:
+            if 'mcpServers' in tool_config:
+                for server_name, server_config in tool_config['mcpServers'].items():
+                    tools_info.append({
+                        'server': server_name,
+                        'command': server_config['command'],
+                        'args': server_config['args'],
+                        'status': 'connected',
+                        'note': 'Инструменты будут определены MCP сервером автоматически'
+                    })
+
+                    # Qwen-Agent сам получит инструменты через MCP протокол
+                    # и они станут доступны через self.bot.function_map
+
+        # Проверяем, какие инструменты реально зарегистрированы
+        if hasattr(self.bot, 'function_map'):
+            registered_tools = list(self.bot.function_map.keys())
+            if registered_tools:
+                print(f"Зарегистрированные инструменты: {registered_tools}")
+                tools_info.append({
+                    'registered_tools': registered_tools
+                })
+
+        return tools_info
