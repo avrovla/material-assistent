@@ -32,3 +32,13 @@
   - get_fine_tuning_status
 - Навык для ИИ-агента
   - fine-tuning-expert
+
+
+## 23.04.2026
+
+### Добавлено
+- Тест-кейсы: 
+  - module-max-phase-expert
+  - module-dataset-expert
+  - module-fine-tuning-expert
+  - module-formation-energy-prediction-expert

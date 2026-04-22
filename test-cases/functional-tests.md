@@ -23,7 +23,7 @@ REST API for materials science built with FastAPI, providing:
 > See detailed test cases: [module-max-phase-expert.md](./module-max-phase-expert.md)
 
 ### Test Cases
-- **TC-MP-001**: Health Check — Success (1 test)
+- **TC-MP-001**: Get MAX Phases — Success with Mixed Results (1 Test)
 
 ---
 
@@ -32,9 +32,9 @@ REST API for materials science built with FastAPI, providing:
 > See detailed test cases: [module-dataset-expert.md](./module-dataset-expert.md)
 
 ### Test Cases
-- **TC-DS-001**: Get Material by ID — Success
-- **TC-DS-002**: Get Material by ID — Not Found
-- **TC-DS-003**: Get Material by ID — Missing API Key (3 tests)
+- **TC-DS-001**: Create Dataset — Success with New Name
+- **TC-DS-002**: Create Dataset — Reject Existing Name
+- **TC-DS-003**: Create Dataset — Large File Performance (3 Tests)
 
 ---
 
@@ -43,11 +43,8 @@ REST API for materials science built with FastAPI, providing:
 > See detailed test cases: [module-fine-tuning-expert.md](./module-fine-tuning-expert.md)
 
 ### Test Cases
-- **TC-FT-001**: Search Materials — Success with Results
-- **TC-FT-002**: Search Materials — Multiple Element Combinations
-- **TC-FT-003**: Search Materials — No Results
-- **TC-FT-004**: Search Materials — Invalid Request Body
-- **TC-FT-005**: Search Materials — Caching Behavior (5 tests)
+- **TC-FT-001**: Start Fine-Tuning — Success with New Model Name
+- **TC-FT-002**: Start Fine-Tuning — Reject Existing Model Name
 
 ---
 
@@ -56,19 +53,17 @@ REST API for materials science built with FastAPI, providing:
 > See detailed test cases: [module-formation-energy-prediction.md](./module-formation-energy-prediction.md)
 
 ### Test Cases
-- **TC-FE-001**: Clear Search Cache — Success (1 test)
+- **TC-FE-001**: Predict Formation Energy via Fine-Tuned Model — Success
+- **TC-FE-002**: Predict Formation Energy via Base Model — Success
 
 ---
 
 ## Test Coverage Summary
 
-| Module | Endpoints | Test Cases |
+| Module | Tool | Test Cases |
 |--------|-----------|------------|
-| Health | 1 | 1 |
-| Materials (lookup) | 1 | 3 |
-| Materials (search) | 2 | 5 |
-| Datasets | 5 | 8 |
-| Prediction | 1 | 5 |
-| Fine-Tuning | 2 | 8 |
-| Error Handling | N/A | 6 |
-| **Total** | **12** | **36** |
+| MAX-Phase Expert | 1 | 1 |
+| Dataset Expert | 1 | 3 |
+| Fine-Tuning Expert | 1 | 2 |
+| Formation Energy Prediction | 1 | 2 |
+| **Total** | **4** | **8** |
