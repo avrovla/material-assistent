@@ -15,7 +15,12 @@ from matgl_model import (
     DatasetRequest, 
     DatasetResponse,
     MaterialDetail,
-    DatasetDetailResponse
+    DatasetDetailResponse,
+    PredictRequest,
+    PredictResponse,
+    FineTuningRequest,
+    ModelListResponse,
+    FineTuningStatusResponse
 )
 
 # Инициализируем MCP сервер
@@ -177,6 +182,84 @@ async def delete_dataset(dataset_name: str):
     response.raise_for_status()
     
     return response.json()
+
+
+@mcp.tool()
+async def predict_formation_energy(cif: str, model_name: str):
+    """
+    Предсказать энергию формирования для структуры в формате CIF.
+
+    Args:
+        cif: структура в формате cif
+        model_name: имя модели предсказания
+    """
+    payload = PredictRequest(cif=cif, model_name=model_name)
+    
+    response = await client.post(
+        f"{API_BASE_URL}/api/v1/predict",
+        json=payload.model_dump()
+    )
+    response.raise_for_status()
+    
+    data = response.json()
+    return PredictResponse(**data)
+
+
+@mcp.tool()
+async def start_fine_tuning(model_name: str, dataset_name: str):
+    """
+    Запустить дообучение модели M3GNet на пользовательском датасете.
+
+    Дообучение выполняется асинхронно. Возвращает 200 с сообщением о запуске.
+
+    Args:
+        model_name: имя для новой дообученной модели
+        dataset_name: имя датасета из каталога datasets
+    """
+    payload = FineTuningRequest(model_name=model_name, dataset_name=dataset_name)
+    
+    response = await client.post(
+        f"{API_BASE_URL}/api/v1/material/fine-tuning",
+        json=payload.model_dump()
+    )
+    response.raise_for_status()
+    
+    return response.json()
+
+
+@mcp.tool()
+async def list_fine_tuned_models():
+    """
+    Получить список всех доступных моделей.
+    """
+    response = await client.get(
+        f"{API_BASE_URL}/api/v1/material/fine-tuning/models",
+    )
+    response.raise_for_status()
+    
+    data = response.json()
+    return ModelListResponse(**data)
+
+
+@mcp.tool()
+async def get_fine_tuning_status(model_name: str):
+    """
+    Получить статус дообучения модели.
+
+    Возвращает статус задачи и результат, если дообучение завершено.
+    Если задача уже удалена из памяти, проверяет наличие файла модели
+    и находит соответствующий лог.
+
+    Args:
+        model_name: имя для новой дообученной модели
+    """
+    response = await client.get(
+        f"{API_BASE_URL}/api/v1/material/fine-tuning/{model_name}",
+    )
+    response.raise_for_status()
+    
+    data = response.json()
+    return FineTuningStatusResponse(**data)
 
 
 if __name__ == "__main__":
