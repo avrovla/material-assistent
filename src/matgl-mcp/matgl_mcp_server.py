@@ -206,6 +206,27 @@ async def predict_formation_energy(cif: str, model_name: str):
 
 
 @mcp.tool()
+async def predict_formation_energy_default(cif: str):
+    """
+    Предсказать энергию формирования для структуры в формате CIF.
+
+    Args:
+        cif: структура в формате cif
+        model_name: имя модели предсказания
+    """
+    payload = PredictRequest(cif=cif)
+    
+    response = await client.post(
+        f"{API_BASE_URL}/api/v1/predict",
+        json=payload.model_dump()
+    )
+    response.raise_for_status()
+    
+    data = response.json()
+    return PredictResponse(**data)
+
+
+@mcp.tool()
 async def start_fine_tuning(model_name: str, dataset_name: str):
     """
     Запустить дообучение модели M3GNet на пользовательском датасете.
