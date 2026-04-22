@@ -6,14 +6,22 @@ MCP сервер для matgl-api
 
 from fastmcp import FastMCP
 import httpx
-from typing import Optional, Dict, Any, List
+from typing import List
 import os
-from matgl_model import MaterialSearchRequest, MaterialSearchResponse, DatasetListResponse, DatasetRequest, DatasetResponse
+from matgl_model import (
+    MaterialSearchRequest, 
+    MaterialSearchResponse, 
+    DatasetListResponse, 
+    DatasetRequest, 
+    DatasetResponse,
+    MaterialDetail,
+    DatasetDetailResponse
+)
 
 # Инициализируем MCP сервер
 mcp = FastMCP("matgl-mcp")
 
-# Конфигурация вашего API
+# Конфигурация API
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 # HTTP клиент для запросов
@@ -38,17 +46,14 @@ async def search_materials(input: List[List[str]]) -> MaterialSearchResponse:
         >>> await search_materials([["Ti", "V"], ["Al", "Si"], ["C", "N"]])
     """
     
-        # Формируем тело запроса согласно MaterialSearchRequest
     payload = MaterialSearchRequest(element_lists=input)
     
-    # Отправляем POST запрос
     response = await client.post(
         f"{API_BASE_URL}/api/v1/material/search",
         json=payload.model_dump()
     )
     response.raise_for_status()
     
-    # Возвращаем результат согласно MaterialSearchResponse
     data = response.json()
     if "results" in data:
         return MaterialSearchResponse(**data)
@@ -69,13 +74,11 @@ async def list_datasets() -> DatasetListResponse:
         >>> await list_datasets()
     """
     
-    # Отправляем GET запрос
     response = await client.get(
         f"{API_BASE_URL}/api/v1/material/dataset",
     )
     response.raise_for_status()
     
-    # Возвращаем результат согласно DatasetListResponse
     data = response.json()
     return DatasetListResponse(**data)
 
@@ -97,21 +100,83 @@ async def create_dataset(input: List[str], ds_name: str) -> DatasetResponse:
         >>> await create_dataset(["Ti2AlC", "Ti3AlC2"], "custom_dataset")
     """
     
-    # Формируем тело запроса согласно DatasetRequest
     payload = DatasetRequest(formulas=input, dataset_name=ds_name)
     
-    # Отправляем POST запрос
     response = await client.post(
         f"{API_BASE_URL}/api/v1/material/dataset",
         json=payload.model_dump()
     )
     response.raise_for_status()
     
-    # Возвращаем результат согласно DatasetResponse
     data = response.json()
     return DatasetResponse(**data)
+
+
+@mcp.tool()
+async def get_material_from_mp(material_id: str) -> MaterialDetail:
+    """
+    Возвращает химическую формулу, энергию формирования и структуру в формате CIF.
+    
+    Args:
+        material_id: Идентификатор материала в Materials Project
+                      Например: mp-149
+   
+    Example:
+        >>> await get_material_from_mp("mp-149")
+    """
+    
+    response = await client.get(
+        f"{API_BASE_URL}/api/v1/material/{material_id}",
+    )
+    response.raise_for_status()
+    
+    data = response.json()
+    return MaterialDetail(**data)
         
 
+@mcp.tool()
+async def get_dataset(dataset_name: str, with_struct: bool = False) -> DatasetDetailResponse:
+    """
+    Получить датасет по имени.
+
+    Возвращает список материалов с material_id, formula и formation_energy_per_atom.
+    Если with_struct=true, также включается структура в формате CIF.
+    
+    Args:
+        dataset_name: имя датасета
+        with_struct: включать ли структуры в ответ (по умолчанию false)
+   
+    Example:
+        >>> await get_dataset("custom_ds", true)
+    """
+    response = await client.get(
+        f"{API_BASE_URL}/api/v1/material/dataset/{dataset_name}?with_struct={with_struct}",
+    )
+    response.raise_for_status()
+    
+    data = response.json()
+    return DatasetDetailResponse(**data)
+
+
+@mcp.tool()
+async def delete_dataset(dataset_name: str):
+
+    """
+    Удалить датасет по имени.
+   
+    Args:
+        dataset_name: имя датасета
+   
+    Example:
+        >>> await delete_dataset("custom_ds", true)
+    """
+
+    response = await client.delete(
+        f"{API_BASE_URL}/api/v1/material/dataset/{dataset_name}",
+    )
+    response.raise_for_status()
+    
+    return response.json()
 
 
 if __name__ == "__main__":
