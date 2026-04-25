@@ -37,7 +37,7 @@ class ChatBotWithHistory:
         self.llm = Ollama(
             model="qwen3:8b-16k",
             base_url="http://localhost:11434",
-            temperature=0.7,
+            temperature=0.3,
             num_predict=16384,
             request_timeout=120.0
         )

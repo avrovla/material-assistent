@@ -22,15 +22,46 @@ from matgl_model import (
     ModelListResponse,
     FineTuningStatusResponse
 )
+from formula_analyze import is_max_phase
+from pathlib import Path
+import json
 
 # Инициализируем MCP сервер
 mcp = FastMCP("matgl-mcp")
 
 # Конфигурация API
 API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
+WORKING_DIR = os.getenv("WORKING_DIR")
 
 # HTTP клиент для запросов
 client = httpx.AsyncClient(timeout=30.0)
+
+# ========== Инструмент для работы с хим. формулами ==========
+
+
+@mcp.tool()
+async def search_max_phases(input: List[List[str]], output_file: str) -> List[str]:
+    """
+    Поиск MAX-фаз по химическим системам
+    
+    Args:
+        input: Список списков элементов для перебора комбинаций.
+                      Например: [["Ti", "Cr", "V"], ["Al", "Si", "Ga"], ["C", "N"]]
+        output_file: Имя файла для сохранения результата
+    
+    Returns:
+        Список MAX-фаз.
+    
+    Example:
+        >>> await search_max_phases([["Ti", "V"], ["Al", "Si"], ["C", "N"]])
+    """
+    resp = await _search_materials_impl(input)
+    lst = list(set([e.formula_pretty for e in resp.results if is_max_phase(e.formula_pretty)]))
+    file_path = Path(WORKING_DIR) / output_file
+    with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(lst, f, ensure_ascii=False, indent=2)
+
+    return lst
 
 # ========== Инструменты для работы с API ==========
 
@@ -50,7 +81,11 @@ async def search_materials(input: List[List[str]]) -> MaterialSearchResponse:
     Example:
         >>> await search_materials([["Ti", "V"], ["Al", "Si"], ["C", "N"]])
     """
+    return await _search_materials_impl(input)
     
+
+async def _search_materials_impl(input: List[List[str]]) -> MaterialSearchResponse:
+    """Внутренняя реализация поиска материалов."""
     payload = MaterialSearchRequest(element_lists=input)
     
     response = await client.post(
