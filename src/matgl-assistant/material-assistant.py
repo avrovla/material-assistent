@@ -6,6 +6,7 @@ import asyncio
 import json
 from datetime import datetime
 from pathlib import Path
+import time
 
 class ChatBotWithHistory:
     def __init__(self, history_file="chat_history.json"):
@@ -61,12 +62,27 @@ class ChatBotWithHistory:
             except:
                 print("⚠️ Не удалось загрузить историю")
                 
-    def save_to_history(self, user_msg, bot_response):
+    def format_time(self, seconds):
+        """Форматирование времени обработки"""
+        if seconds < 60:
+            return f"{seconds:.2f} сек"
+        elif seconds < 3600:
+            minutes = int(seconds // 60)
+            secs = seconds % 60
+            return f"{minutes} мин {secs:.1f} сек"
+        else:
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            return f"{hours} ч {minutes} мин"
+                
+    def save_to_history(self, user_msg, bot_response, processing_time):
         """Сохранение сообщения в историю"""
         message = {
             "timestamp": datetime.now().isoformat(),
             "user": user_msg,
-            "bot": str(bot_response)
+            "bot": str(bot_response),
+            "processing_time": processing_time,
+            "processing_time_formatted": self.format_time(processing_time)
         }
         self.conversation_history.append(message)
         
@@ -103,7 +119,7 @@ class ChatBotWithHistory:
                     
                 if user_input == '/clear':
                     self.conversation_history = []
-                    self.save_to_history("=== ИСТОРИЯ ОЧИЩЕНА ===", "")
+                    self.save_to_history("=== ИСТОРИЯ ОЧИЩЕНА ===", "", 0)
                     print("✓ История очищена")
                     continue
                     
@@ -115,12 +131,26 @@ class ChatBotWithHistory:
                     continue
                 
                 print("\n🤔 Анализирую запрос...")
+                
+                # Засекаем время начала обработки
+                start_time = time.time()
+                
                 response = await self.agent.run(user_msg=user_input)
                 
-                # Сохраняем в историю
-                self.save_to_history(user_input, response)
+                # Вычисляем время обработки
+                end_time = time.time()
+                processing_time = end_time - start_time
                 
-                print(f"\n🤖 Ассистент: {response}")
+                # Форматируем время для отображения
+                time_str = self.format_time(processing_time)
+                
+                # Сохраняем в историю
+                self.save_to_history(user_input, response, processing_time)
+                
+                # Добавляем информацию о времени в ответ
+                response_with_time = f"{response}\n\n⏱️ Время обработки: {time_str}"
+                
+                print(f"\n🤖 Ассистент: {response_with_time}")
                 print("-"*60)
                 
             except KeyboardInterrupt:
@@ -139,8 +169,10 @@ class ChatBotWithHistory:
         print("-"*60)
         for i, msg in enumerate(self.conversation_history[-10:], 1):
             time = datetime.fromisoformat(msg['timestamp']).strftime("%H:%M:%S")
+            processing_time = msg.get('processing_time_formatted', 'N/A')
             print(f"\n[{time}] Вы: {msg['user'][:100]}")
             print(f"[{time}] Бот: {msg['bot'][:100]}...")
+            print(f"⏱️ Время обработки: {processing_time}")
         print("-"*60)
     
     def save_dialog_to_file(self):
@@ -150,6 +182,7 @@ class ChatBotWithHistory:
             for msg in self.conversation_history:
                 f.write(f"[{msg['timestamp']}] Пользователь: {msg['user']}\n")
                 f.write(f"[{msg['timestamp']}] Ассистент: {msg['bot']}\n")
+                f.write(f"⏱️ Время обработки: {msg.get('processing_time_formatted', 'N/A')}\n")
                 f.write("-"*80 + "\n")
         print(f"✓ Диалог сохранен в файл {filename}")
     
