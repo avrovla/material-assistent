@@ -19,12 +19,17 @@ classifiers = [
 ]
 
 dependencies = [
-    "qwen-agent[gui,rag,code_interpreter,mcp]",
     "soundfile",
     "requests",
     "httpx",
     "fastmcp",
-    "pydantic"
+    "pydantic",
+    "pymatgen",
+    "llama-index",
+    "llama-index-core",
+    "llama-index-tools-mcp",
+    "llama-index-llms-ollama",
+    "llama-index-embeddings-huggingface"
 ]
 
 [project.optional-dependencies]
