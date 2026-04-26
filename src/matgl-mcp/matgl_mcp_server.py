@@ -25,6 +25,7 @@ from matgl_model import (
 from formula_analyze import is_max_phase
 from pathlib import Path
 import json
+import codecs
 
 # Инициализируем MCP сервер
 mcp = FastMCP("matgl-mcp")
@@ -225,15 +226,25 @@ async def delete_dataset(dataset_name: str):
 
 
 @mcp.tool()
-async def predict_formation_energy(cif: str, model_name: str):
+async def predict_formation_energy(cif_file: str, model_name: str):
     """
-    Предсказать энергию формирования для структуры в формате CIF.
+    Предсказать энергию формирования по структуре из файла CIF.
 
     Args:
-        cif: структура в формате cif
+        cif_file: короткое имя файла
         model_name: имя модели предсказания
     """
-    payload = PredictRequest(cif=cif, model_name=model_name)
+
+    file_path = Path(WORKING_DIR) / cif_file
+
+    content = ""
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    content = codecs.decode(content, 'unicode_escape')        
+
+    payload = PredictRequest(cif=content, model_name=model_name)
     
     response = await client.post(
         f"{API_BASE_URL}/api/v1/predict",
