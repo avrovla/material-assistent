@@ -124,23 +124,28 @@ async def list_datasets() -> DatasetListResponse:
 
 
 @mcp.tool()
-async def create_dataset(input: List[str], ds_name: str) -> DatasetResponse:
+async def create_dataset(input_file: str, ds_name: str) -> DatasetResponse:
     """
-    Создание датасета по списку химических формул
+    Создание датасета по списку химических формул из переданного json-файла
     
     Args:
-        input: Список списков химических формул.
-                      Например: ["Ti2AlC", "Ti3AlC2"]
+        input_file: коротокое имя файла со списком химических формул
     
     Returns:
-        Словарь с ключом "results", содержащий список найденных материалов.
-        Каждый материал содержит формулу и другие свойства.
+        Словарь с ключом "results", содержащий результат создания датасета.
     
     Example:
-        >>> await create_dataset(["Ti2AlC", "Ti3AlC2"], "custom_dataset")
+        >>> await create_dataset(["Ti2AlC", "Ti3AlC2"], "custom_dataset", "file_name.json")
     """
     
-    payload = DatasetRequest(formulas=input, dataset_name=ds_name)
+    file_path = Path(WORKING_DIR) / input_file
+
+    data = []
+
+    with open(file_path, 'r', encoding='utf-8') as file:
+        data = json.load(file)
+
+    payload = DatasetRequest(formulas=data, dataset_name=ds_name)
     
     response = await client.post(
         f"{API_BASE_URL}/api/v1/material/dataset",
